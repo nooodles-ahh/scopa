@@ -341,6 +341,7 @@ namespace Scopa {
             NativeArray<int> faceVertexOffsets, faceTriIndexCounts; // index = i
             NativeArray<Vector3> faceVertices;
             NativeArray<Vector4> faceU, faceV; // index = i, .w = scale
+            NativeArray<float> faceRot; 
             NativeArray<Vector2> faceShift, faceUVoverride; // index = i
             int vertCount, triIndexCount;
 
@@ -381,6 +382,7 @@ namespace Scopa {
                 faceVertices = new NativeArray<Vector3>(vertCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 faceU = new NativeArray<Vector4>(faceList.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 faceV = new NativeArray<Vector4>(faceList.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+                faceRot = new NativeArray<float>(faceList.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 faceShift = new NativeArray<Vector2>(faceList.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 faceUVoverride = new NativeArray<Vector2>(vertCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
@@ -404,6 +406,7 @@ namespace Scopa {
                     }
                     faceU[i] = new Vector4(faceList[i].UAxis.X, faceList[i].UAxis.Y, faceList[i].UAxis.Z, faceList[i].XScale);
                     faceV[i] = new Vector4(faceList[i].VAxis.X, faceList[i].VAxis.Y, faceList[i].VAxis.Z, faceList[i].YScale);
+                    faceRot[i] = faceList[i].Rotation;
                     faceShift[i] = new Vector2(faceList[i].XShift, faceList[i].YShift);
                 }
 
@@ -420,16 +423,18 @@ namespace Scopa {
                 jobData.faceVertexOffsets = faceVertexOffsets;
                 jobData.faceTriIndexCounts = faceTriIndexCounts;
 
-                #if SCOPA_USE_BURST
+#if SCOPA_USE_BURST
                 jobData.faceVertices = faceVertices.Reinterpret<float3>();
                 jobData.faceU = faceU.Reinterpret<float4>();
                 jobData.faceV = faceV.Reinterpret<float4>();
+                jobData.faceRot = faceRot.Reinterpret<float>();
                 jobData.faceShift = faceShift.Reinterpret<float2>();
                 jobData.uvOverride = faceUVoverride.Reinterpret<float2>();
-                #else
+#else
                 jobData.faceVertices = faceVertices;
                 jobData.faceU = faceU;
                 jobData.faceV = faceV;
+                jobData.faceRot = faceRot;
                 jobData.faceShift = faceShift;
                 jobData.uvOverride = faceUVoverride;
                 #endif
@@ -478,6 +483,7 @@ namespace Scopa {
                 faceUVoverride.Dispose();
                 faceU.Dispose();
                 faceV.Dispose();
+                faceRot.Dispose();
                 faceShift.Dispose();
 
                 return newMesh;
@@ -492,14 +498,16 @@ namespace Scopa {
         {
             [ReadOnlyAttribute] public NativeArray<int> faceVertexOffsets, faceTriIndexCounts; // index = i
 
-            #if SCOPA_USE_BURST
+#if SCOPA_USE_BURST
             [ReadOnlyAttribute] public NativeArray<float3> faceVertices;
             [ReadOnlyAttribute] public NativeArray<float4> faceU, faceV; // index = i, .w = scale
+            [ReadOnlyAttribute] public NativeArray<float> faceRot;
             [ReadOnlyAttribute] public NativeArray<float2> faceShift, uvOverride; // index = i
             [ReadOnlyAttribute] public float3 meshOrigin;
-            #else            
+#else
             [ReadOnlyAttribute] public NativeArray<Vector3> faceVertices;
             [ReadOnlyAttribute] public NativeArray<Vector4> faceU, faceV; // index = i, .w = scale
+            [ReadOnlyAttribute] public NativeArray<float> faceRot;
             [ReadOnlyAttribute] public NativeArray<Vector2> faceShift, uvOverride; // index = i
             [ReadOnlyAttribute] public Vector3 meshOrigin;
             #endif
@@ -532,16 +540,46 @@ namespace Scopa {
                     if (uvOverride[n].x > IGNORE_UV) {
                         outputUVs[n] = uvOverride[n];
                     } else {
-                        #if SCOPA_USE_BURST
+#if SCOPA_USE_BURST
                         outputUVs[n] = new float2(
                             (math.dot(faceVertices[n], faceU[i].xyz / faceU[i].w) + (faceShift[i].x % textureWidth)) / textureWidth,
                             (math.dot(faceVertices[n], faceV[i].xyz / -faceV[i].w) + (-faceShift[i].y % textureHeight)) / textureHeight
-                        ) * globalTexelScale;
-                        #else
+                        );
+
+                        var rotationRad = math.radians(faceRot[i]);
+
+                        var rotatedVector = new float2
+                        {
+                            x = (outputUVs[n].x * math.cos(rotationRad)) - (outputUVs[n].y * math.sin(rotationRad)),
+                            y = (outputUVs[n].x * math.sin(rotationRad)) + (outputUVs[n].y * math.cos(rotationRad))
+                        };
+                        outputUVs[n] = rotatedVector * globalTexelScale;
+#else
+
+                        //var faceUScaled = Vector3.Dot(faceVertices[n], faceU[i] / faceU[i].w);
+                        //var faceVScaled = Vector3.Dot(faceVertices[n], faceV[i] / -faceV[i].w);
+                        //var faceURot = faceUScaled * Mathf.Cos(faceRot[i]) - outputUVs[n].y * Mathf.Sin(faceRot[i]);
+                        //var faceYRot = outputUVs[n].y * Mathf.Sin(faceRot[i]) + outputUVs[n].y * Mathf.Cos(faceRot[i]);
+                        //outputUVs[n] = new Vector2(
+                        //    (+(faceShift[i].x % textureWidth)) / (textureWidth),
+                        //    (+(-faceShift[i].y % textureHeight)) / (textureHeight)
+                        //);
+
+                        //outputUVs[n] *= globalTexelScale;
+
                         outputUVs[n] = new Vector2(
                             (Vector3.Dot(faceVertices[n], faceU[i] / faceU[i].w) + (faceShift[i].x % textureWidth)) / (textureWidth),
                             (Vector3.Dot(faceVertices[n], faceV[i] / -faceV[i].w) + (-faceShift[i].y % textureHeight)) / (textureHeight)
-                        ) * globalTexelScale;
+                        );
+
+                        var rotationRad = faceRot[i] * -Mathf.Deg2Rad;
+
+                        var rotatedVector = new Vector2
+                        {
+                            x = (outputUVs[n].x * Mathf.Cos(rotationRad)) - (outputUVs[n].y * Mathf.Sin(rotationRad)),
+                            y = (outputUVs[n].x * Mathf.Sin(rotationRad)) + (outputUVs[n].y * Mathf.Cos(rotationRad))
+                        };
+                        outputUVs[n] = rotatedVector * globalTexelScale;
                         #endif
                     }
                 }
@@ -744,7 +782,7 @@ namespace Scopa {
                             #if SCOPA_USE_BURST
                             var absNormal = math.abs(facePlaneNormals[face]);
                             #else
-                            var absNormal = faceNormal.Absolute();
+                            var absNormal = facePlaneNormals[face].Absolute();
                             #endif
 
                             canBeBoxCollider = !((absNormal.x > 0.01f && absNormal.x < 0.99f) 
