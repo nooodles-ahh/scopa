@@ -110,23 +110,32 @@ namespace Scopa {
         }
 
         static void CacheMaterialSearch() {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             materials.Clear();
             var materialSearch = AssetDatabase.FindAssets("t:Material");
-            foreach ( var materialSearchGUID in materialSearch) {
+            foreach (var materialSearchGUID in materialSearch)
+            {
+                // Load the asset path
+                string assetPath = AssetDatabase.GUIDToAssetPath(materialSearchGUID);
+
+                // Strip off "Assets/Materials/" from the asset path
+                string strippedPath = assetPath.Replace("Assets/Materials/", "").ToLower();
+                strippedPath = strippedPath.Replace(".mat", "");
+                Debug.Log("Material: " + strippedPath);
+
                 // if there's multiple Materials attached to one Asset, we have to do additional filtering
-                var allAssets = AssetDatabase.LoadAllAssetsAtPath( AssetDatabase.GUIDToAssetPath(materialSearchGUID) );
-                foreach ( var asset in allAssets ) {
-                    if ( asset != null && !materials.ContainsKey(asset.name) && asset is Material ) {
-                        // Debug.Log("loaded " + asset.name);
-                        materials.Add(asset.name, asset as Material);
+                var allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+                foreach (var asset in allAssets)
+                {
+                    if (asset != null && !materials.ContainsKey(strippedPath) && asset is Material)
+                    {
+                        materials.Add(strippedPath, asset as Material);
                     }
                 }
-
             }
-            #else
+#else
             Debug.Log("CacheMaterialSearch() is not available at runtime.");
-            #endif
+#endif
         }
 
         /// <summary>Before generating game objects, we may want to modify some of the MapFile data. For example, when merging entities into worldspawn.</summary>
