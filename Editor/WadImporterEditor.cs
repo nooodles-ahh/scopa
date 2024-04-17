@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 #if UNITY_2020_2_OR_NEWER
@@ -22,7 +23,13 @@ namespace Scopa.Editor {
         public override void OnDisable()
         {
             if ( wadConfigEditor != null)
+            {
+        #if UNITY_EDITOR
                 DestroyImmediate( wadConfigEditor );
+        #else
+                Destroy( wadConfigEditor );
+        #endif
+            }
             base.OnDisable();
         }
 
@@ -111,3 +118,4 @@ namespace Scopa.Editor {
     }
 
 }
+#endif

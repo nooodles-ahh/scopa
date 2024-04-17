@@ -1,5 +1,5 @@
 // from https://answers.unity.com/questions/489942/how-to-make-a-readonly-property-in-inspector.html
-
+#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,3 +27,4 @@ namespace Scopa.Editor {
     }
 
 }
+#endif

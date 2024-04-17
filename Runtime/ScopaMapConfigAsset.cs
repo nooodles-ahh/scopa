@@ -194,7 +194,9 @@ namespace Scopa {
                 GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 primitive.active = false;
                 builtinDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+            #if UNITY_EDITOR
                 DestroyImmediate(primitive);
+            #endif
             }
             return builtinDefaultMaterial;
 

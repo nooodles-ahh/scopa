@@ -529,7 +529,9 @@ namespace Scopa {
         static void SetGameObjectStatic(GameObject go, bool isNavigationStatic = true) {
             if ( isNavigationStatic ) {
                 go.isStatic = true;
-            } else {
+            } 
+        #if UNITY_EDITOR
+            else {
                 GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.ContributeGI 
                     | StaticEditorFlags.OccluderStatic 
                     | StaticEditorFlags.BatchingStatic 
@@ -538,6 +540,7 @@ namespace Scopa {
                     | StaticEditorFlags.ReflectionProbeStatic
                 );
             }
+        #endif
         }
 
         /// <summary> for each solid in an Entity, add either a Box Collider or a Mesh Collider component... or make one big merged Mesh Collider </summary>

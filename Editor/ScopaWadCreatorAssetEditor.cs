@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Scopa;
@@ -8,3 +9,4 @@ namespace Scopa.Editor {
     [CustomEditor(typeof(ScopaWadCreatorAsset), true)]
     public class ScopaWadCreatorAssetEditor : UnityEditor.Editor { }
 }
+#endif

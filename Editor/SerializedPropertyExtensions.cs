@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
@@ -50,3 +51,4 @@ public static class SerializedPropertyExtensions
         return (T)@object;
     }
 }
+#endif

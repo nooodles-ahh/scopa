@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 #if UNITY_2020_2_OR_NEWER
@@ -79,3 +80,4 @@ namespace Scopa.Editor {
     }
 
 }
+#endif
