@@ -285,7 +285,7 @@ namespace Scopa {
                         text += $": \"{editorLabel}\" : \"{defaultValue}\" : \"{editorHelp}\" =\n    [\n        { string.Join("\n        ", choices.Select( (choice, index) => choice.ToString(index)) ) } \n    ]";
                         break;
                     case FgdPropertyType.Flags:
-                        text += $": \"{editorLabel}\" : \"{defaultValue}\" : \"{editorHelp}\" =\n    [\n        { string.Join("\n        ", flags.Select( (flag, index) => flag.ToString(index)) ) } \n    ]";
+                        text += $" =\n    [\n        { string.Join("\n        ", flags.Select( (flag, index) => flag.ToString(index)) ) } \n    ]";
                         break;
                 }
 
